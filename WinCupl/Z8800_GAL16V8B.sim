@@ -1,0 +1,52 @@
+%SIGNAL
+PIN   1 =  A12 
+PIN   2 =  A13 
+PIN   3 =  A14 
+PIN   4 =  A15 
+PIN  19 =  ALE 
+PIN   8 =  DUMMY1 
+PIN   9 =  DUMMY2 
+PIN  11 =  DUMMY3 
+PIN   7 =  RW 
+PIN   5 =  nAS 
+PIN   6 =  nDS 
+PIN  12 =  nEXT_CON_1 
+PIN  13 =  nEXT_CON_2 
+PIN  16 =  nRAM_CS 
+PIN  17 =  nRAM_OE 
+PIN  18 =  nRAM_WE 
+PIN  15 =  nROM_CS 
+PIN  14 =  nROM_OE 
+%END
+
+%FIELD
+%END
+
+%EQUATION
+ALE =>
+    !nAS
+
+nEXT_CON_1 =>
+    0 
+
+nEXT_CON_2 =>
+    1 
+
+nRAM_CS =>
+    !A15
+
+nRAM_OE =>
+    nDS
+  # !RW
+
+nRAM_WE =>
+    nDS
+  # RW
+
+nROM_CS =>
+    A15
+
+nROM_OE =>
+    nDS
+
+%END

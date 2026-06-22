@@ -1,0 +1,42 @@
+Name     Z8800_GAL16V8B ;
+PartNo   00 ;
+Date     2026/05/22 ;
+Revision 01 ;
+Designer Engineer ;
+Company  fenrir ;
+Assembly None ;
+Location  ;
+Device   G16V8 ;
+
+/* *************** INPUT PINS *********************/
+PIN 1    = A12                        ; /*                                 */ 
+PIN 2    = A13                        ; /*                                 */ 
+PIN 3    = A14                        ; /*                                 */ 
+PIN 4    = A15                        ; /*                                 */ 
+PIN 5    = nAS                        ; /*                                 */ 
+PIN 6    = nDS                        ; /*                                 */ 
+PIN 7    = RW                        ; /*                                 */ 
+PIN 8    = DUMMY1                        ; /*                                 */ 
+PIN 9    = DUMMY2                        ; /*                                 */ 
+PIN 11   = DUMMY3                        ; /*                                 */ 
+
+/* *************** OUTPUT PINS *********************/
+PIN 12    = nEXT_CON_1                        ; /*                                 */ 
+PIN 13    = nEXT_CON_2                        ; /*                                 */ 
+PIN 14    = nROM_OE                        ; /*                                 */ 
+PIN 15    = nROM_CS                        ; /*                                 */ 
+PIN 16    = nRAM_CS                        ; /*                                 */ 
+PIN 17    = nRAM_OE                        ; /*                                 */ 
+PIN 18    = nRAM_WE                        ; /*                                 */ 
+PIN 19    = ALE                        ; /*                                 */ 
+
+ALE = !nAS;
+nROM_OE = nDS;
+nROM_CS = A15;
+nRAM_WE = nDS # RW;
+nRAM_OE = nDS # (!RW);
+nRAM_CS = !A15;
+nEXT_CON_1 = 'h'0;
+nEXT_CON_2 = 'h'1;
+
+

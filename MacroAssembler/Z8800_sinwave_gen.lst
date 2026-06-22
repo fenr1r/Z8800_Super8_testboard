@@ -1,0 +1,537 @@
+ AS V1.42 Beta [Bld 293] - Source File Z8800_test.asm - Page 1 - 6/22/2026 2:25:36
+
+
+       1/   0 :                                 cpu Z88C00
+       2/   0 :                         
+       3/   0 :                         	include "include/regz8.inc"
+(1)    1/   0 : =>UNDEFINED                             ifndef  __regz8inc     ; avoid multiple inclusion
+(1)    2/   0 : =1H                     __regz8inc	equ     1
+(1)    3/   0 :                         
+(1)    4/   0 :                                         save
+(1)  489/   0 : ALL                                     restore                 ; wieder erlauben
+(1)  490/   0 :                         
+(1)  491/   0 : [1]                                     endif			; __regz8inc
+(1)  492/   0 :                         
+       4/   0 :                         
+       5/   0 : =0H                     CTVAL0_H	equ	000h	; 19660800 / 4 / 8000 = 
+       6/   0 : =13H                    CTVAL0_L	equ	013h	; 
+       7/   0 :                         
+       8/   0 : =0FFH                   CTVAL1_H	equ	0FFh	; 19660800 / 4 / 8000 = 
+       9/   0 : =0FFH                   CTVAL1_L	equ	0FFh	; 
+      10/   0 :                         
+      11/   0 : =RR8                    MPTR	equ	RR8
+      12/   0 :                         
+      13/   0 : =0A000H                 RAMVAL1	equ	0A000h	; RAM address is from 0x8000 to 0xFFFF
+      14/   0 :                         
+      15/   0 : =0B000H                 RAM_SMPCNT	equ	0B000h	; RAM address is from 0x8000 to 0xFFFF
+      16/   0 :                         
+      17/   0 :                         
+      18/   0 :                         ; --------------------------------------------------------------------------------------------------------------
+      19/   0 :                         ; Interrupt vector
+      20/   0 :                         ; --------------------------------------------------------------------------------------------------------------
+      21/   0 : 01 4F                   INTR0:	DW	BADIRQV
+      22/   2 : 01 4F                   INTR1:	DW	BADIRQV
+      23/   4 : 01 4F                   INTR2:	DW	BADIRQV
+      24/   6 : 01 4F                   INTR3:	DW	BADIRQV
+      25/   8 : 01 4F                   INTR4:	DW	BADIRQV
+      26/   A : 01 4F                   INTR5:	DW	BADIRQV
+      27/   C : 00 CD                   INTR6:	DW	TIMER0
+      28/   E : 01 2E                   INTR7:	DW	TIMER1
+      29/  10 : 01 4F                   INTR8:	DW	BADIRQV
+      30/  12 : 01 4F                   INTR9:	DW	BADIRQV
+      31/  14 : 01 4F                   INTR10:	DW	BADIRQV
+      32/  16 : 01 4F                   INTR11:	DW	BADIRQV
+      33/  18 : 01 4F                   INTR12:	DW	BADIRQV
+      34/  1A : 01 4F                   INTR13:	DW	BADIRQV
+      35/  1C : 01 4F                   INTR14:	DW	BADIRQV
+      36/  1E : 01 4F                   INTR15:	DW	BADIRQV
+      37/  20 :                         
+      38/  20 :                         ; --------------------------------------------------------------------------------------------------------------
+      39/  20 :                         ; main routine (loop)
+      40/  20 :                         ; --------------------------------------------------------------------------------------------------------------
+      41/  20 :                         	ORG	0020H
+      42/  20 : 8B 00                   	JR	START1
+      43/  22 :                         
+      44/  22 :                         START1:
+      45/  22 : 8F                      	DI	; disable interrupt
+      46/  23 : 4F                      	SB0
+      47/  24 :                         
+      48/  24 :                         ; General settings
+      49/  24 : E6 FE 01                	LD	EMT, #00000001B	; P34 = normal I/O, Slow memory timing = disabled, ROM no wait, RAM no wait, stack = register, DMA = RAM
+      50/  27 :                         
+      51/  27 :                         ; Port 0 set as address
+      52/  27 : E6 D0 00                	LD	P0, #00H
+ AS V1.42 Beta [Bld 293] - Source File Z8800_test.asm - Page 2 - 6/22/2026 2:25:36
+
+
+      53/  2A : E6 F0 FF                	LD	P0M, #11111111B	; All address (not I/O)
+      54/  2D : E6 F1 30                	LD	PM, #00110000B	; Port 1 = Address/data, disable DM (P3_5), port 0 and 1 = push-pull, port 0 = output
+      55/  30 : E6 F5 00                	LD	H1C, #00000000B	; Handshake disabled at port 0
+      56/  33 :                         
+      57/  33 :                         ; Port init
+      58/  33 : E6 D4 AA                	LD	P4, #10101010B
+      59/  36 : E6 F6 00                	LD	P4D, #00000000B
+      60/  39 : E6 F7 00                	LD	P4OD, #00000000B
+      61/  3C :                         
+      62/  3C :                         	; Port 2 is all output
+      63/  3C : B0 D2                   	CLR	P2
+      64/  3E :                         
+      65/  3E : E6 F8 8A                	LD	P2AM, #10001010B	; P31 = output (UART_TX), P30 = input (UART_RX)
+      66/  41 : E6 F9 0A                	LD	P2BM, #00001010B
+      67/  44 : E6 FA 0A                	LD	P2CM, #00001010B
+      68/  47 : E6 FB 0A                	LD	P2DM, #00001010B
+      69/  4A :                         
+      70/  4A :                         ; Set Reg. pointer
+      71/  4A : E6 D6 C0                	LD	RP0, #0C0H
+      72/  4D : E6 D7 C8                	LD	RP1, #0C8H
+      73/  50 :                         
+      74/  50 :                         ; Set stack
+      75/  50 : E6 D8 00                	LD	SPH, #00h
+      76/  53 : E6 D9 FF                	LD	SPL, #0FFh
+      77/  56 :                         
+      78/  56 :                         ; Clear stack
+      79/  56 : E6 D8 FF                	LD	SPH, #0FFH
+      80/  59 :                         CSZ:
+      81/  59 : B1 D8                   	CLR	@SPH
+      82/  5B : 00 D8                   	DEC	SPH
+      83/  5D : EB FA                   	JR	NZ, CSZ
+      84/  5F : B1 D8                   	CLR	@SPH
+      85/  61 :                         
+      86/  61 :                         ; Set interrupt
+      87/  61 : E6 DE 00                	LD	SYM, #00000000B	; all interrupt disable
+      88/  64 : E6 FF 02                	LD	IPR, #00000010B	; Set priority, B > C > A, IRQ(2 > 3 > 4) > (5 > 6 > 7) > (0 > 1)
+      89/  67 : E6 DD 24                	LD	IMR, #00100100B	; Level 2 (timer 0) & level 5 (timer 1) irq enable
+      90/  6A :                         	
+      91/  6A :                         ; Set Timer 0
+      92/  6A : 5F                      	SB1
+      93/  6B : E6 E2 00                	LD	C0TCH, #CTVAL0_H	; Set counter val
+      94/  6E : E6 E3 13                	LD	C0TCL, #CTVAL0_L
+      95/  71 : E6 E0 04                	LD	C0M, #00000100B	; Set no-capture
+      96/  74 :                         	
+      97/  74 : 4F                      	SB0
+      98/  75 : E6 E0 A5                	LD	C0CT, #10100101B	; Continuous, count-down, load counter, zero count irq enable, enable counter	
+      99/  78 :                         
+     100/  78 :                         ; Set Timer 1
+     101/  78 : 5F                      	SB1
+     102/  79 : E6 E4 FF                	LD	C1TCH, #CTVAL1_H	; Set counter val
+     103/  7C : E6 E5 FF                	LD	C1TCL, #CTVAL1_L
+     104/  7F : E6 E1 04                	LD	C1M, #00000100B	; Set no-capture
+     105/  82 :                         	
+     106/  82 : 4F                      	SB0
+     107/  83 : E6 E1 A5                	LD	C1CT, #10100101B	; Continuous, count-down, load counter, zero count irq enable, enable counter
+     108/  86 :                         
+     109/  86 :                         ; Set UART
+     110/  86 : 5F                      	SB1
+     111/  87 : E6 FA 70                	LD	UMA, #01110000B	; /16, 8bits, no-parity, tr&rcv wake-up value = 0
+     112/  8A : E6 F8 00                	LD	UBGH,	#00h		; Time constant = 19,660,800 / 4 / 16 / 9600 / 2 - 1 = 15
+ AS V1.42 Beta [Bld 293] - Source File Z8800_test.asm - Page 3 - 6/22/2026 2:25:36
+
+
+     113/  8D : E6 F9 0F                	LD	UBGL, 	#0Fh		; Time constant
+     114/  90 : E6 FB 3E                	LD	UMB, #00111110B	; P21 = P21 data, auto-echo off, receive clock is baud rate generator output, 
+     115/  93 :                         
+     116/  93 : 4F                      	SB0
+     117/  94 : E6 EB 88                	LD	UTC, #10001000B	; enable transmit
+     118/  97 : E6 ED 00                	LD	UIE, #00000000B	; disable all interrupts, no DMA
+     119/  9A : E6 EC 02                	LD	URC, #00000010B	; enable receive
+     120/  9D :                         
+     121/  9D :                         ; Enable interrupt
+     122/  9D : 9F                      	EI
+     123/  9E :                         
+     124/  9E : 60 D4                   	COM	P4	; debug
+     125/  A0 :                         
+     126/  A0 : C6 C0 00 00             	LDW	RR0, #0000h
+     127/  A4 :                         
+     128/  A4 :                         ; Print message
+     129/  A4 : C6 C8 01 53             	LDW	MPTR, #MSG
+     130/  A8 : F6 00 B8                	CALL	SENDM
+     131/  AB :                         
+     132/  AB :                         ; RAM clear
+     133/  AB : B0 C0                   	CLR	R0
+     134/  AD : B7 01 00 A0             	LDE	RAMVAL1, R0
+     135/  B1 : B7 01 00 B0             	LDE	RAM_SMPCNT, R0
+     136/  B5 :                         
+     137/  B5 :                         loop:
+     138/  B5 : FF                      	nop
+     139/  B6 : 8B FD                   	JR	loop
+     140/  B8 :                         ; --------------------------------------------------------------------------------------------------------------
+     141/  B8 :                         ; sub routines
+     142/  B8 :                         ; --------------------------------------------------------------------------------------------------------------
+     143/  B8 :                         SENDM:	
+     144/  B8 : E3 08                   	LDCI	R0, @MPTR
+     145/  BA : A6 C0 24                	CP	R0, #'$'
+     146/  BD : 6B 05                   	JR	EQ, SENDM_END
+     147/  BF : F6 00 C5                	CALL	SENDC
+     148/  C2 : 8B F4                   	JR	SENDM
+     149/  C4 :                         SENDM_END:
+     150/  C4 : AF                      	RET
+     151/  C5 :                         
+     152/  C5 :                         ; sendc : send one char
+     153/  C5 :                         SENDC:
+     154/  C5 : 76 EB 02                	TM	UTC, #00000010B	; is transmit buffer empty
+     155/  C8 : 6B FB                   	JR	Z, SENDC			; if not empty, wait
+     156/  CA : 09 EF                   	LD	UIO, R0
+     157/  CC : AF                      	RET
+     158/  CD :                         
+     159/  CD :                         ; --------------------------------------------------------------------------------------------------------------
+     160/  CD :                         ; interrupt routines
+     161/  CD :                         ; --------------------------------------------------------------------------------------------------------------
+     162/  CD :                         
+     163/  CD :                         ; ADC output
+     164/  CD :                         TIMER0:
+     165/  CD : 70 C0                   	PUSH	R0
+     166/  CF : 70 C1                   	PUSH	R1
+     167/  D1 : 70 C2                   	PUSH	R2
+     168/  D3 :                         	;PUSH	R3
+     169/  D3 : 70 C5                   	PUSH	R5
+     170/  D5 :                         
+     171/  D5 : C6 C0 02 00             	LDW	RR0, #SINTABLE
+     172/  D9 :                         
+ AS V1.42 Beta [Bld 293] - Source File Z8800_test.asm - Page 4 - 6/22/2026 2:25:36
+
+
+     173/  D9 : A7 31 00 B0             	LDE	R3, RAM_SMPCNT
+     174/  DD : 3E                      	INC	R3
+     175/  DE : B7 31 00 B0             	LDE	RAM_SMPCNT, R3
+     176/  E2 :                         
+     177/  E2 : 02 13                   	ADD	R1, R3
+     178/  E4 :                         	
+     179/  E4 : C3 21                   	LDE	R2, @RR0
+     180/  E6 :                         
+     181/  E6 :                         	; bit reverse
+     182/  E6 : B0 C5                   	CLR	R5
+     183/  E8 :                         
+     184/  E8 : 76 C2 01                	TM	R2, #00000001B
+     185/  EB : 6B 02                   	JR	Z, BRV1
+     186/  ED : 77 5F                   	BITS	R5, #7
+     187/  EF :                         BRV1:
+     188/  EF : 76 C2 02                	TM	R2, #00000010B
+     189/  F2 : 6B 02                   	JR	Z, BRV2
+     190/  F4 : 77 5D                   	BITS	R5, #6
+     191/  F6 :                         BRV2:
+     192/  F6 : 76 C2 04                	TM	R2, #00000100B
+     193/  F9 : 6B 02                   	JR	Z, BRV3
+     194/  FB : 77 5B                   	BITS	R5, #5
+     195/  FD :                         BRV3:
+     196/  FD : 76 C2 08                	TM	R2, #00001000B
+     197/ 100 : 6B 02                   	JR	Z, BRV4
+     198/ 102 : 77 59                   	BITS	R5, #4
+     199/ 104 :                         BRV4:
+     200/ 104 : 76 C2 10                	TM	R2, #00010000B
+     201/ 107 : 6B 02                   	JR	Z, BRV5
+     202/ 109 : 77 57                   	BITS	R5, #3
+     203/ 10B :                         BRV5:
+     204/ 10B : 76 C2 20                	TM	R2, #00100000B
+     205/ 10E : 6B 02                   	JR	Z, BRV6
+     206/ 110 : 77 55                   	BITS	R5, #2
+     207/ 112 :                         BRV6:
+     208/ 112 : 76 C2 40                	TM	R2, #01000000B
+     209/ 115 : 6B 02                   	JR	Z, BRV7
+     210/ 117 : 77 53                   	BITS	R5, #1
+     211/ 119 :                         BRV7:
+     212/ 119 : 76 C2 80                	TM	R2, #10000000B
+     213/ 11C : 6B 02                   	JR	Z, BRV8
+     214/ 11E : 77 51                   	BITS	R5, #0
+     215/ 120 :                         BRV8:
+     216/ 120 :                         
+     217/ 120 : 59 D2                   	LD	P2, R5
+     218/ 122 :                         
+     219/ 122 : 46 E0 02                	OR	C0CT, #00000010B	; Reset overflow interrupt flag
+     220/ 125 :                         
+     221/ 125 : 50 C5                   	POP	R5
+     222/ 127 :                         	;POP	R3
+     223/ 127 : 50 C2                   	POP	R2
+     224/ 129 : 50 C1                   	POP	R1
+     225/ 12B : 50 C0                   	POP	R0
+     226/ 12D : BF                      	IRET
+     227/ 12E :                         
+     228/ 12E :                         ; LED count-up
+     229/ 12E :                         TIMER1:
+     230/ 12E : 70 C0                   	PUSH	R0
+     231/ 130 : 70 C1                   	PUSH	R1
+     232/ 132 : 70 C2                   	PUSH	R2
+ AS V1.42 Beta [Bld 293] - Source File Z8800_test.asm - Page 5 - 6/22/2026 2:25:36
+
+
+     233/ 134 :                         	;PUSH	R3
+     234/ 134 : 70 C5                   	PUSH	R5
+     235/ 136 :                         
+     236/ 136 : A7 10 00 A0             	LDC	R1, RAMVAL1	; R1 <- RAM
+     237/ 13A : 1E                      	INC	R1
+     238/ 13B : CB 02                   	JR	NOV, TIMER1IRQ_END
+     239/ 13D :                         	
+     240/ 13D : 20 D4                   	INC	P4
+     241/ 13F :                         TIMER1IRQ_END:
+     242/ 13F : B7 10 00 A0             	LDC	RAMVAL1, R1
+     243/ 143 : 46 E1 02                	OR	C1CT, #00000010B	; Reset overflow interrupt flag
+     244/ 146 :                         
+     245/ 146 : 50 C5                   	POP	R5
+     246/ 148 :                         	;POP	R3
+     247/ 148 : 50 C2                   	POP	R2
+     248/ 14A : 50 C1                   	POP	R1
+     249/ 14C : 50 C0                   	POP	R0
+     250/ 14E : BF                      	IRET
+     251/ 14F :                         
+     252/ 14F :                         BADIRQV:
+     253/ 14F : E6 D4 F0                	LD	P4, #11110000B
+     254/ 152 : BF                      	IRET
+     255/ 153 :                         
+     256/ 153 :                         MSG:
+     257/ 153 : 48 65 6C 6C 6F 20 57 6F 	DB	'Hello World\r\n$'
+          15B : 72 6C 64 0D 0A 24      
+     258/ 161 :                         
+     259/ 200 :                         	ORG	0200H
+     260/ 200 :                         
+     261/ 200 :                         SINTABLE:
+     262/ 200 : 80 83 86 89 8C 90 93 96 	DB	080H, 083H, 086H, 089H, 08CH, 090H, 093H, 096H, 099H, 09CH, 09FH, 0A2H
+          208 : 99 9C 9F A2            
+     263/ 20C : A5 A8 AB AE B1 B3 B6 B9 	DB	0A5H, 0A8H, 0ABH, 0AEH, 0B1H, 0B3H, 0B6H, 0B9H, 0BCH, 0BFH, 0C1H, 0C4H
+          214 : BC BF C1 C4            
+     264/ 218 : C7 C9 CC CE D1 D3 D5 D8 	DB	0C7H, 0C9H, 0CCH, 0CEH, 0D1H, 0D3H, 0D5H, 0D8H, 0DAH, 0DCH, 0DEH, 0E0H
+          220 : DA DC DE E0            
+     265/ 224 : E2 E4 E6 E8 EA EB ED EF 	DB	0E2H, 0E4H, 0E6H, 0E8H, 0EAH, 0EBH, 0EDH, 0EFH, 0F0H, 0F1H, 0F3H, 0F4H
+          22C : F0 F1 F3 F4            
+     266/ 230 : F5 F6 F8 F9 FA FA FB FC 	DB	0F5H, 0F6H, 0F8H, 0F9H, 0FAH, 0FAH, 0FBH, 0FCH, 0FDH, 0FDH, 0FEH, 0FEH
+          238 : FD FD FE FE            
+     267/ 23C : FE FF FF FF FF FF FF FF 	DB	0FEH, 0FFH, 0FFH, 0FFH, 0FFH, 0FFH, 0FFH, 0FFH, 0FEH, 0FEH, 0FEH, 0FDH
+          244 : FE FE FE FD            
+     268/ 248 : FD FC FB FA FA F9 F8 F6 	DB	0FDH, 0FCH, 0FBH, 0FAH, 0FAH, 0F9H, 0F8H, 0F6H, 0F5H, 0F4H, 0F3H, 0F1H
+          250 : F5 F4 F3 F1            
+     269/ 254 : F0 EF ED EB EA E8 E6 E4 	DB	0F0H, 0EFH, 0EDH, 0EBH, 0EAH, 0E8H, 0E6H, 0E4H, 0E2H, 0E0H, 0DEH, 0DCH
+          25C : E2 E0 DE DC            
+     270/ 260 : DA D8 D5 D3 D1 CE CC C9 	DB	0DAH, 0D8H, 0D5H, 0D3H, 0D1H, 0CEH, 0CCH, 0C9H, 0C7H, 0C4H, 0C1H, 0BFH
+          268 : C7 C4 C1 BF            
+     271/ 26C : BC B9 B6 B3 B1 AE AB A8 	DB	0BCH, 0B9H, 0B6H, 0B3H, 0B1H, 0AEH, 0ABH, 0A8H, 0A5H, 0A2H, 09FH, 09CH
+          274 : A5 A2 9F 9C            
+     272/ 278 : 99 96 93 90 8C 89 86 83 	DB	099H, 096H, 093H, 090H, 08CH, 089H, 086H, 083H, 080H, 07DH, 07AH, 077H
+          280 : 80 7D 7A 77            
+     273/ 284 : 74 70 6D 6A 67 64 61 5E 	DB	074H, 070H, 06DH, 06AH, 067H, 064H, 061H, 05EH, 05BH, 058H, 055H, 052H
+          28C : 5B 58 55 52            
+     274/ 290 : 4F 4D 4A 47 44 41 3F 3C 	DB	04FH, 04DH, 04AH, 047H, 044H, 041H, 03FH, 03CH, 039H, 037H, 034H, 032H
+          298 : 39 37 34 32            
+     275/ 29C : 2F 2D 2B 28 26 24 22 20 	DB	02FH, 02DH, 02BH, 028H, 026H, 024H, 022H, 020H, 01EH, 01CH, 01AH, 018H
+          2A4 : 1E 1C 1A 18            
+     276/ 2A8 : 16 15 13 11 10 0F 0D 0C 	DB	016H, 015H, 013H, 011H, 010H, 00FH, 00DH, 00CH, 00BH, 00AH, 008H, 007H
+          2B0 : 0B 0A 08 07            
+ AS V1.42 Beta [Bld 293] - Source File Z8800_test.asm - Page 6 - 6/22/2026 2:25:36
+
+
+     277/ 2B4 : 06 06 05 04 03 03 02 02 	DB	006H, 006H, 005H, 004H, 003H, 003H, 002H, 002H, 002H, 001H, 001H, 001H
+          2BC : 02 01 01 01            
+     278/ 2C0 : 01 01 01 01 02 02 02 03 	DB	001H, 001H, 001H, 001H, 002H, 002H, 002H, 003H, 003H, 004H, 005H, 006H
+          2C8 : 03 04 05 06            
+     279/ 2CC : 06 07 08 0A 0B 0C 0D 0F 	DB	006H, 007H, 008H, 00AH, 00BH, 00CH, 00DH, 00FH, 010H, 011H, 013H, 015H
+          2D4 : 10 11 13 15            
+     280/ 2D8 : 16 18 1A 1C 1E 20 22 24 	DB	016H, 018H, 01AH, 01CH, 01EH, 020H, 022H, 024H, 026H, 028H, 02BH, 02DH
+          2E0 : 26 28 2B 2D            
+     281/ 2E4 : 2F 32 34 37 39 3C 3F 41 	DB	02FH, 032H, 034H, 037H, 039H, 03CH, 03FH, 041H, 044H, 047H, 04AH, 04DH
+          2EC : 44 47 4A 4D            
+     282/ 2F0 : 4F 52 55 58 5B 5E 61 64 	DB	04FH, 052H, 055H, 058H, 05BH, 05EH, 061H, 064H, 067H, 06AH, 06DH, 070H
+          2F8 : 67 6A 6D 70            
+     283/ 2FC : 74 77 7A 7D             	DB	074H, 077H, 07AH, 07DH
+     284/ 300 :                         
+     285/ 300 :                         	END
+ AS V1.42 Beta [Bld 293] - Source File Z8800_test.asm - Page 7 - 6/22/2026 2:25:36
+
+
+  Symbol Table (* = unused):
+  --------------------------
+
+*ARCHITECTURE :                                        "i386-unknown-win32" - |
+ BADIRQV :                      14F C |  BRV1 :                         0EF C |
+ BRV2 :                         0F6 C |  BRV3 :                         0FD C |
+ BRV4 :                         104 C |  BRV5 :                         10B C |
+ BRV6 :                         112 C |  BRV7 :                         119 C |
+ BRV8 :                         120 C | *C0ASSIGN :                     0F0 - |
+*C0C :                          0E2 D |  C0CH :                         0E2 D |
+*C0CL :                         0E3 D | *C0CM :                           3 - |
+*C0CONT :                     0E0.7 B |  C0CT :                         0E0 D |
+*C0DIR :                      0E0.6 B | *C0EDGE :                     0E0.2 B |
+*C0EN :                       0E0.0 B | *C0EOC :                      0E0.1 B |
+*C0LC :                       0E0.5 B |  C0M :                          0E0 D |
+*C0RETRIG :                   0E0.3 B | *C0SC :                       0E0.3 B |
+*C0ST :                       0E0.4 B | *C0TC :                         0E2 D |
+ C0TCH :                        0E2 D |  C0TCL :                        0E3 D |
+*C0ZCIEN :                    0E0.2 B | *C0ZERO_VECT :                    6 C |
+*C1ASSIGN :                     0F0 - | *C1C :                          0E4 D |
+ C1CH :                         0E4 D | *C1CL :                         0E5 D |
+*C1CM :                           3 - | *C1CONT :                     0E0.7 B |
+ C1CT :                         0E1 D | *C1DIR :                      0E0.6 B |
+*C1EDGE :                     0E1.2 B | *C1EN :                       0E0.0 B |
+*C1EOC :                      0E0.1 B | *C1LC :                       0E0.5 B |
+ C1M :                          0E1 D | *C1RETRIG :                   0E1.3 B |
+*C1SC :                       0E0.3 B | *C1ST :                       0E0.4 B |
+*C1TC :                         0E4 D |  C1TCH :                        0E4 D |
+ C1TCL :                        0E5 D | *C1ZCIEN :                    0E0.2 B |
+*C1ZERO_VECT :                    6 C | *CASESENSITIVE :                  0 - |
+*CONSTPI :        3.141592653589793 - |  CSZ :                           59 C |
+ CTVAL0_H :                       0 - |  CTVAL0_L :                      13 - |
+ CTVAL1_H :                     0FF - |  CTVAL1_L :                     0FF - |
+*DATAWS :                        0C - | *DATE :                 "6/22/2026" - |
+*DC :                           0F0 D |  DCH :                          0F0 D |
+*DCL :                          0F1 D | *DESKEWCNT :                    0F0 - |
+*DMAEN :                      0F4.2 B | *DMAMODE :                    0F4.3 B |
+*DMASEL :                     0FE.0 B |  EMT :                          0FE D |
+*EWI :                        0FE.7 B | *FALSE :                          0 - |
+*FIE :                        0DE.1 B | *FIS :                           1C - |
+*FLAGS :                        0D5 D | *FLOATMAX :      1.797693134866E308 - |
+*GIE :                        0DE.0 B | *GROUPA :                     0FF.0 B |
+*GROUPB :                     0FF.2 B | *GROUPC :                     0FF.5 B |
+ H0C :                          0F4 D |  H1C :                          0F5 D |
+*HAS64 :                          1 - | *HSCHAN0_VECT :                  0A C |
+*HSCHAN1_VECT :                  10 C | *HSEN :                       0F4.0 B |
+ IMR :                          0DD D | *INTR0 :                          0 C |
+*INTR1 :                          2 C | *INTR10 :                        14 C |
+*INTR11 :                        16 C | *INTR12 :                        18 C |
+*INTR13 :                        1A C | *INTR14 :                        1C C |
+*INTR15 :                        1E C | *INTR2 :                          4 C |
+*INTR3 :                          6 C | *INTR4 :                          8 C |
+*INTR5 :                         0A C | *INTR6 :                         0C C |
+*INTR7 :                         0E C | *INTR8 :                         10 C |
+*INTR9 :                         12 C | *IP :                           0DA D |
+ IPH :                          0DA D | *IPL :                          0DB D |
+ IPR :                          0FF D |  IRQ :                          0DC D |
+ IRQ0_VECT :                      2 C |  IRQ1_VECT :                      4 C |
+ IRQ2_VECT :                      6 C |  IRQ3_VECT :                      8 C |
+ IRQ4_VECT :                     0A C | *IRQ5_VECT :                     0C C |
+ AS V1.42 Beta [Bld 293] - Source File Z8800_test.asm - Page 8 - 6/22/2026 2:25:36
+
+
+ IRQ6_VECT :                     0E C |  IRQ7_VECT :                     10 C |
+*IRR :                          0DC D | *LISTON :                         1 - |
+ LOOP :                         0B5 C | *MACEXP :                         7 - |
+*MOMCPU :                     88C00 - |  MOMCPUNAME :              "Z88C00" - |
+ MSG :                          153 C | *NESTMAX :                      100 - |
+ P0 :                           0D0 D | *P00M :                       0F0.0 B |
+*P01M :                       0F0.1 B | *P02M :                       0F0.2 B |
+*P03M :                       0F0.3 B | *P04M :                       0F0.4 B |
+*P05M :                       0F0.5 B | *P06M :                       0F0.6 B |
+*P07M :                       0F0.7 B | *P0DIR :                      0F1.0 B |
+ P0M :                          0F0 D | *P0OD :                       0F1.1 B |
+*P1 :                           0D1 D | *P1M :                           30 - |
+*P1OD :                       0F1.2 B |  P2 :                           0D2 D |
+*P20M :                           3 - | *P20_VECT :                      0E C |
+*P21M :                          0C - | *P21_VECT :                       4 C |
+*P22M :                           3 - | *P22_VECT :                       2 C |
+*P23M :                          0C - | *P23_VECT :                       2 C |
+*P24M :                           3 - | *P24_VECT :                      0A C |
+*P25M :                          0C - | *P25_VECT :                      0A C |
+*P26M :                           3 - | *P26_VECT :                       6 C |
+*P27M :                          0C - | *P27_VECT :                       6 C |
+*P2AIP :                        0FC D |  P2AM :                         0F8 D |
+*P2BIP :                        0FD D |  P2BM :                         0F9 D |
+ P2CM :                         0FA D |  P2DM :                         0FB D |
+*P3 :                           0D3 D | *P30M :                          30 - |
+*P30_VECT :                      0E C | *P31M :                         0C0 - |
+*P31_VECT :                       4 C | *P32M :                          30 - |
+*P32_VECT :                       8 C | *P33M :                         0C0 - |
+*P33_VECT :                       8 C | *P34M :                          30 - |
+*P34_VECT :                      10 C | *P35DM :                      0F1.3 B |
+*P35M :                         0C0 - | *P35_VECT :                      10 C |
+*P36M :                          30 - | *P36_VECT :                       6 C |
+*P37M :                         0C0 - | *P37_VECT :                       6 C |
+ P4 :                           0D4 D |  P4D :                          0F6 D |
+ P4OD :                         0F7 D |  PM :                           0F1 D |
+*PROGWS :                        30 - | *PSEL :                       0F4.1 B |
+*RAMEND :                       0BF D |  RAMVAL1 :                    0A000 - |
+ RAM_SMPCNT :                 0B000 - | *RELAXED :                        0 - |
+*RESET_VECT :                     0 C |  RP0 :                          0D6 D |
+ RP1 :                          0D7 D |  SENDC :                        0C5 C |
+ SENDM :                        0B8 C |  SENDM_END :                    0C4 C |
+ SINTABLE :                     200 C | *SLOW :                       0FE.6 B |
+*SP :                           0D8 D |  SPH :                          0D8 D |
+ SPL :                          0D9 D |  START1 :                        22 C |
+*STKSEL :                     0FE.1 B | *SUBGROUPB :                  0FF.3 B |
+*SUBGROUPC :                  0FF.6 B |  SYM :                          0DE D |
+*TIME :                   "2:25:36" - |  TIMER0 :                       0CD C |
+ TIMER1 :                       12E C |  TIMER1IRQ_END :                13F C |
+*TRUE :                           1 - | *UAUTOECHO :                  0FB.5 B |
+*UBG :                          0F8 D | *UBGEN :                      0FB.1 B |
+ UBGH :                         0F8 D |  UBGL :                         0F9 D |
+*UBGSRC :                     0FB.2 B | *UBPC :                          30 - |
+*UBRK :                       0EB.6 B | *UBRKDET :                    0EC.5 B |
+*UBRKIE :                     0ED.5 B | *UCCDET :                     0EC.6 B |
+*UCCIE :                      0ED.6 B | *UCLK :                         0C0 - |
+*UCLKOUSEL :                    0C0 - | *UFE :                        0EC.4 B |
+ UIE :                          0ED D |  UIO :                          0EF D |
+*ULPBKEN :                    0FB.0 B |  UMA :                          0FA D |
+ UMB :                          0FB D | *UOE :                        0EC.3 B |
+*UPE :                        0EC.2 B | *UPEN :                       0FA.3 B |
+ AS V1.42 Beta [Bld 293] - Source File Z8800_test.asm - Page 9 - 6/22/2026 2:25:36
+
+
+*UPEVEN :                     0FA.2 B |  URC :                          0EC D |
+*URCAIE :                     0ED.0 B | *URCE :                       0EC.0 B |
+*URDMAE :                     0ED.1 B | *URE :                        0EC.1 B |
+*UREIE :                      0ED.4 B | *URWKUPVAL :                  0FA.1 B |
+*URXCLKSEL :                  0FB.4 B | *USTOP :                      0EB.5 B |
+*UTBE :                       0EB.1 B |  UTC :                          0EB D |
+*UTDMAEN :                    0EB.0 B | *UTDSEL :                     0EB.7 B |
+*UTE :                        0EB.3 B | *UTIE :                       0ED.2 B |
+*UTWKUPVAL :                  0FA.0 B | *UTXCLKSEL :                  0FB.3 B |
+*UWUPDET :                    0EC.7 B | *UWUPEN :                     0EB.4 B |
+*UWUPIE :                     0ED.7 B | *UZC :                        0EB.2 B |
+*UZCIE :                      0ED.3 B | *U_BRK_VECT :                    0E C |
+*U_CC_VECT :                     0E C | *U_FRMERR_VECT :                 0E C |
+*U_PARITY_VECT :                 0E C | *U_RXDATA :                      0E C |
+*U_RXOVR_VECT :                  0E C | *U_TXDATA_VECT :                  4 C |
+*U_WKUP_VECT :                   0E C | *U_ZCOUNT_VECT :                  4 C |
+*VERSION :                     142F - | *WUMCH :                        0FE D |
+*WUMSK :                        0FF D | *__REGZ88C0XINC :                 1 - |
+*__REGZ8INC :                     1 - |
+
+    270 symbols
+    194 unused symbols
+
+ AS V1.42 Beta [Bld 293] - Source File Z8800_test.asm - Page 10 - 6/22/2026 2:25:36
+
+
+  Register Definitions (* = unused):
+  ----------------------------------
+
+ MPTR --> RR8                        
+
+      1 definition
+
+ AS V1.42 Beta [Bld 293] - Source File Z8800_test.asm - Page 11 - 6/22/2026 2:25:36
+
+
+  Defined Macros:
+  ---------------
+
+__Z8BFIELD                            | __Z8BIT                              
+__Z8CBFIELD                           | __Z8CBIT                             
+
+      4 macros
+
+ AS V1.42 Beta [Bld 293] - Source File Z8800_test.asm - Page 12 - 6/22/2026 2:25:36
+
+
+  Code Pages:
+  ----------
+
+STANDARD (0 changed characters)
+
+1 code page
+ AS V1.42 Beta [Bld 293] - Source File Z8800_test.asm - Page 13 - 6/22/2026 2:25:36
+
+
+  Space Used in CODE :
+  --------------------
+
+0-160              200-2FF            
+
+  Space Used in DATA :
+  --------------------
+
+BF                 D0-DE              E0-E5              EB-ED              
+EF-F1              F4-FF              
+
+
+0.02 seconds assembly time
+
+   1040 lines source file
+   1149 lines incl. macro expansions
+      2 passes
+      0 errors
+      0 warnings
